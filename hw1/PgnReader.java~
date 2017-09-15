@@ -1,0 +1,29 @@
+import java.util.Scanner;
+public class PgnReader {
+
+    /*
+     * Returns String containing value from the tag name tag pair
+     * in the PGN game text.
+     * Returns "NOT GIVEN" if no tag name tag pair
+     *
+     * @param tagName - a tag name
+     * @param pgnGame - PGN-formated game
+     */
+    public static String tagValue(String tagName, String pgnGame) {
+
+    }
+
+    /*
+     * Returns String containing the game's final position in
+     * Forsyth-Edwards Notation.
+     *
+     * @param pgnGame - PGN-formatted game
+     */
+    public static String finalPosition(String pgnGame) {
+
+    }
+
+    public static void main(String[] args) {
+
+    }
+}
