@@ -87,10 +87,8 @@ public class PgnReader {
             whiteMove = move.substring(0, nextMove);
             blackMove = move.substring(nextMove + 1, move.length() - 1);
         } else {
-            whiteMove = move;
+            whiteMove = move.substring(0, move.indexOf("\n"));
         }
-        System.out.println("WHITE MOVE: " + whiteMove);
-        System.out.println("BLACK MOVE: " + blackMove);
 
         if (whiteMove.length() > 0) {
             if (ranks.indexOf(whiteMove.charAt(0)) > 0) {
@@ -131,23 +129,30 @@ public class PgnReader {
         int[] results = {-1, -1, -1, -1};
         String files = "12345678";
         String ranks = "abcdefgh";
+        String endPos;
         if (move.length() > 1 && move.toLowerCase().charAt(0) == 'p') {
             if (move.length() >= 2 && move.charAt(2) == 'x') {
                 results = pawnCapture(board, move);
                 return results;
             }
-            //move = move.substring(1);
             move = move.trim();
         }
-        move = move.substring(1);
+        if (move.length() > 1 && move.charAt(1) == 'x') {
+            move = move.substring(0, 1) + move.substring(2);
+        }
+        if (move.length() > 1 && (move.charAt(move.length() - 1) == '#'
+                                || move.charAt(move.length() - 1) == '+')) {
+            move = move.substring(0, move.length() - 1);
+        }
+        endPos = move.substring(1);
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
                 if (board[i][j] == piece) {
                     possibleMoves = posMoves(board, piece, i, j);
-                    if (move.length() > 1) {
-                        if (possibleMoves.indexOf(move) > 0) {
-                            int newRank = ranks.indexOf(move.charAt(0));
-                            int newFile = files.indexOf(move.charAt(1));
+                    if (endPos.length() > 1) {
+                        if (possibleMoves.indexOf(endPos) > 0) {
+                            int newRank = ranks.indexOf(endPos.charAt(0));
+                            int newFile = files.indexOf(endPos.charAt(1));
                             results[0] = i;
                             results[1] = j;
                             results[2] = newFile;
@@ -185,6 +190,176 @@ public class PgnReader {
         return results;
     }
     /**
+     * Generate a String of possible moves for bishop and current board
+     * @param board board containing current position of pieces
+     * @param pos the current position of bishop
+     * @return a String containing all possible moves for given bishop
+     */
+    public static String bishopMoves(char[][] board, int r, int c) {
+        char[] files = {'1', '2', '3', '4', '5', '6', '7', '8'};
+        char[] ranks = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+        String posMoves = "";
+        int i = 0;
+        boolean rowIB = (r + i) < board.length;
+        boolean colIB = (c + i) < board[i].length;
+        while (rowIB && colIB) {
+            posMoves += " " + ranks[c + i] + files[r + i];
+            i++;
+            rowIB = (r + i) < board.length;
+            colIB = (c + i) < board[i].length;
+        }
+
+        i = 0;
+        rowIB = (r - i) > 0;
+        colIB = (c - i) > 0;
+        while (rowIB && colIB) {
+            posMoves += " " + ranks[c - i] + files[r - i];
+            i++;
+            rowIB = (r - i) >= 0;
+            colIB = (c - i) >= 0;
+        }
+
+        i = 0;
+        rowIB = (r - i) > 0;
+        colIB = (c + i) < board[r].length;
+        while (rowIB && colIB) {
+            posMoves += " " + ranks[c + i] + files[r - i];
+            i++;
+            rowIB = (r - i) > 0;
+            colIB = (c + i) < board[i].length;
+        }
+
+        i = 0;
+        rowIB = (r + i) < board.length;
+        colIB = (c - i) > 0;
+        while (rowIB && colIB) {
+            posMoves += " " + ranks[c - i] + files[r + i];
+            i++;
+            rowIB = (r + i) < board.length;
+            colIB = (c - i) > 0;
+        }
+        return posMoves;
+    }
+    /**
+     * Generate a String of all possible Knight moves for current board
+     * @param board board containing current position of pieces
+     * @param pos the current position of Knight
+     * @return a String containing all possible moves for given knights
+     */
+    public static String knightMoves(char[][] board, int r, int c) {
+        char[] files = {'1', '2', '3', '4', '5', '6', '7', '8'};
+        char[] ranks = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+        String posMoves = "";
+        //Knights can move 2 spots in one direction and 1 in another
+        if ((r - 2) >= 0) {
+            if ((c + 1) < board[r].length) {
+                posMoves += " " + ranks[c + 1] + files[r - 2];
+            }
+            if ((c - 1) >= 0) {
+                posMoves += " " + ranks[c - 1] + files[r - 2];
+            }
+
+            //posMoves += files[r - 2];
+        }
+        if ((c - 2) >= 0) {
+            if ((r - 1) >= 0) {
+                posMoves += " " + ranks[c - 2] + files[r - 1];
+            }
+            if ((r + 1) < board.length) {
+                posMoves += " " + ranks[c - 2] + files[r + 1];
+            }
+        }
+        if ((r + 2) < board.length) {
+            if ((c + 1) < board.length) {
+                posMoves += " " + ranks[c + 1] + files[r + 2];
+            }
+            if ((c - 1) >= 0) {
+                posMoves += " " + ranks[c - 1] + files[r + 2];
+            }
+        }
+        if ((c + 2) < board[r].length) {
+
+            if ((r - 1) >= 0) {
+                posMoves += " " + ranks[c + 2] + files[r - 1];
+            }
+            if ((r + 1) < board.length) {
+                posMoves += " " + ranks[c + 2] + files[r + 1];
+            }
+        }
+        return posMoves;
+    }
+    /**
+     * Generate a String of all possible moves for a given Rook
+     * @param board board containing current position of pieces
+     * @param pos the current position of rook
+     * @return a String containing all possible moves for given rook
+     */
+    public static String rookMoves(char[][] board, int r, int c) {
+        char[] files = {'1', '2', '3', '4', '5', '6', '7', '8'};
+        char[] ranks = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+        String posMoves = "";
+        int i = 0;
+        while (i < board[r].length - 1) {
+            posMoves += " " + ranks[i] + files[r];
+            i++;
+        }
+        while (i < board.length - 1) {
+            posMoves += " " + ranks[c] + files[i];
+            i++;
+        }
+        return posMoves;
+    }
+    /**
+     * Generate a String of all possible moves for a given queen
+     * @param board board containing current position of pieces
+     * @param pos the current position of queen
+     * @return a String containing all possible moves for given queen
+     */
+    public static String queenMoves(char[][] board, int r, int c) {
+        String posMoves;
+        posMoves = rookMoves(board, r, c) + bishopMoves(board, r, c);
+        System.out.println(posMoves);
+        return posMoves;
+    }
+    /**
+     * Generate a String of all possible moves for a given king
+     * @param board board containing current position of pieces
+     * @param pos the current position of king
+     * @return a String containing all possible moves for given king
+     */
+    public static String kingMoves(char[][] board, int r, int c) {
+        char[] files = {'1', '2', '3', '4', '5', '6', '7', '8'};
+        char[] ranks = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+        String posMoves = "";
+        //kings can move at most, one position from their current position
+        if (r + 1 < board.length) {
+            posMoves += " " + ranks[c] + files[r + 1];
+            if (c + 1 < board[r + 1].length) {
+                posMoves += " " + ranks[c + 1] + files[r + 1];
+            }
+        }
+        if (c + 1 < board[r].length) {
+            posMoves += " " + ranks[c + 1] + files[r];
+            if (r - 1 >= 0) {
+                posMoves += " " + ranks[c + 1] + files[r - 1];
+            }
+        }
+        if (r - 1 >= 0) {
+            posMoves += " " + ranks[c] + files[r - 1];
+            if (c - 1 >= 0) {
+                posMoves += " " + ranks[c - 1] + files[r - 1];
+            }
+        }
+        if (c - 1 >= 0) {
+            posMoves += " " + ranks[c - 1] + files[r];
+            if (r - 1 >= 0) {
+                posMoves += " " + ranks[c - 1] + files[r - 1];
+            }
+        }
+        return posMoves;
+    }
+
+    /**
      * Generate a String  of all possible moves for a given piece
      * and board
      *
@@ -210,98 +385,17 @@ public class PgnReader {
             }
             posMoves += " " + ranks[c] + files[r - 1];
         } else if (piece == 'r' || piece == 'R') {
-            int i = 0;
-            while (i < board[r].length - 1 && board[r][i + 1] == ' ') {
-                posMoves += " " + ranks[i] + files[r];
-                i++;
-            }
-            while (i < board.length - 1 && board[i + 1][c] == ' ') {
-                posMoves += " " + ranks[c] + files[i];
-                i++;
-            }
+            posMoves = rookMoves(board, r, c);
         } else if (piece == 'b' || piece == 'B') {
-            int i = 0;
-            boolean rowIB = (r + i) < board.length;
-            boolean colIB = (c + i) < board[i].length;
-            while (rowIB && colIB) {
-                posMoves += " " + ranks[c + i] + files[r + i];
-                i++;
-                rowIB = (r + i) < board.length;
-                colIB = (c + i) < board[i].length;
-            }
-
-            i = 0;
-            rowIB = (r - i) > 0;
-            colIB = (c - i) > 0;
-            while (rowIB && colIB) {
-                posMoves += " " + ranks[c - i] + files[r - i];
-                i++;
-                rowIB = (r - i) >= 0;
-                colIB = (c - i) >= 0;
-            }
-
-            i = 0;
-            rowIB = (r - i) > 0;
-            colIB = (c + i) < board[r].length;
-            while (rowIB && colIB) {
-                posMoves += " " + ranks[c + i] + files[r - i];
-                i++;
-                rowIB = (r - i) > 0;
-                colIB = (c + i) < board[i].length;
-            }
-
-            i = 0;
-            rowIB = (r + i) < board.length;
-            colIB = (c - i) > 0;
-            while (rowIB && colIB) {
-                posMoves += " " + ranks[c - i] + files[r + i];
-                i++;
-                rowIB = (r + i) < board.length;
-                colIB = (c - i) > 0;
-            }
+            posMoves = bishopMoves(board, r, c);
+        } else if (piece == 'n' || piece == 'N') {
+            posMoves = knightMoves(board, r, c);
+        } else if (piece == 'q' || piece == 'Q') {
+            posMoves = queenMoves(board, r, c);
+        } else if (piece == 'k' || piece == 'K') {
+            posMoves = kingMoves(board, r, c);
         }
-        if (piece == 'n' || piece == 'N') {
-            if (piece == 'N') {
-                System.out.println("BLACK KNIGHT FOUND");
-            }
-            //Knights can move 2 spots in one direction and 1 in another
-            if (r - 2 >= 0) {
-                if (c + 1 < board.length) {
-                    posMoves += " " + ranks[c + 1];
-                }
-                if (c - 1 >= 0) {
-                    posMoves += " " + ranks[c - 1];
-                }
-                posMoves += files[r - 2];
-            }
-            if (c - 2 >= 0) {
-                posMoves += " " + ranks[c - 2];
-                if (r - 1 >= 0) {
-                    posMoves += files[r - 1];
-                }
-                if (r + 1 < board.length) {
-                    posMoves += files[r + 1];
-                }
-            }
-            if (r + 2 < board.length) {
-                if (c + 1 < board.length) {
-                    posMoves += " " + ranks[c + 1];
-                }
-                if (c - 1 >= 0) {
-                    posMoves += " " + ranks[c - 1];
-                }
-                posMoves += files[r + 2];
-            }
-            if (c + 2 < board[r].length) {
-                posMoves += " " + ranks[c + 2];
-                if (r - 1 >= 0) {
-                    posMoves += files[r - 1];
-                }
-                if (r + 1 < board.length) {
-                    posMoves += files[r + 1];
-                }
-            }
-        }
+
         return posMoves;
     }
     /**
