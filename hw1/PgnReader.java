@@ -64,7 +64,7 @@ public class PgnReader {
         String[] moves = lineOfMoves.split("\\. ");
         for (String move : moves) {
             move = move.substring(0, move.length());
-            System.out.println(move);
+            //System.out.println(move);
         }
 
         return moves;
@@ -89,6 +89,8 @@ public class PgnReader {
         } else {
             whiteMove = move;
         }
+        System.out.println("WHITE MOVE: " + whiteMove);
+        System.out.println("BLACK MOVE: " + blackMove);
 
         if (whiteMove.length() > 0) {
             if (ranks.indexOf(whiteMove.charAt(0)) > 0) {
@@ -98,10 +100,9 @@ public class PgnReader {
             }
             results = checkBoard(board, whiteMove);
             if (results[0] >= 0) {
-                System.out.println("Move Made");
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
-                return board;
+                //return board;
             }
         }
         if (blackMove.length() > 0) {
@@ -110,10 +111,9 @@ public class PgnReader {
             }
             results = checkBoard(board, blackMove);
             if (results[0] >= 0) {
-                System.out.println("Move Made");
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
-                return board;
+                //return board;
             }
         }
         return board;
@@ -140,28 +140,18 @@ public class PgnReader {
             move = move.trim();
         }
         move = move.substring(1);
-        System.out.println("Move " + move);
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
                 if (board[i][j] == piece) {
                     possibleMoves = posMoves(board, piece, i, j);
-                    if (possibleMoves.length() > 0) {
-                        System.out.println("Possible Moves: " + possibleMoves);
-                    }
                     if (move.length() > 1) {
                         if (possibleMoves.indexOf(move) > 0) {
-                            System.out.println("MOVE MADE");
                             int newRank = ranks.indexOf(move.charAt(0));
                             int newFile = files.indexOf(move.charAt(1));
                             results[0] = i;
                             results[1] = j;
                             results[2] = newFile;
                             results[3] = newRank;
-                            System.out.print("[");
-                            for (int k = 0; k < results.length; k++) {
-                                System.out.print(results[k] + ", ");
-                            }
-                            System.out.println("]");
                             return results;
                         }
                     }
@@ -230,7 +220,6 @@ public class PgnReader {
                 i++;
             }
         } else if (piece == 'b' || piece == 'B') {
-            System.out.println("BISHOP FOUND");
             int i = 0;
             boolean rowIB = (r + i) < board.length;
             boolean colIB = (c + i) < board[i].length;
@@ -257,16 +246,13 @@ public class PgnReader {
             while (rowIB && colIB) {
                 posMoves += " " + ranks[c + i] + files[r - i];
                 i++;
-                rowIB = (r - i) < board.length;
+                rowIB = (r - i) > 0;
                 colIB = (c + i) < board[i].length;
             }
 
             i = 0;
             rowIB = (r + i) < board.length;
             colIB = (c - i) > 0;
-            if (rowIB && colIB) {
-                System.out.println("CORRECT BISHOP FOUND");
-            }
             while (rowIB && colIB) {
                 posMoves += " " + ranks[c - i] + files[r + i];
                 i++;
@@ -275,7 +261,46 @@ public class PgnReader {
             }
         }
         if (piece == 'n' || piece == 'N') {
-
+            if (piece == 'N') {
+                System.out.println("BLACK KNIGHT FOUND");
+            }
+            //Knights can move 2 spots in one direction and 1 in another
+            if (r - 2 >= 0) {
+                if (c + 1 < board.length) {
+                    posMoves += " " + ranks[c + 1];
+                }
+                if (c - 1 >= 0) {
+                    posMoves += " " + ranks[c - 1];
+                }
+                posMoves += files[r - 2];
+            }
+            if (c - 2 >= 0) {
+                posMoves += " " + ranks[c - 2];
+                if (r - 1 >= 0) {
+                    posMoves += files[r - 1];
+                }
+                if (r + 1 < board.length) {
+                    posMoves += files[r + 1];
+                }
+            }
+            if (r + 2 < board.length) {
+                if (c + 1 < board.length) {
+                    posMoves += " " + ranks[c + 1];
+                }
+                if (c - 1 >= 0) {
+                    posMoves += " " + ranks[c - 1];
+                }
+                posMoves += files[r + 2];
+            }
+            if (c + 2 < board[r].length) {
+                posMoves += " " + ranks[c + 2];
+                if (r - 1 >= 0) {
+                    posMoves += files[r - 1];
+                }
+                if (r + 1 < board.length) {
+                    posMoves += files[r + 1];
+                }
+            }
         }
         return posMoves;
     }
