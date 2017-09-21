@@ -93,9 +93,11 @@ public class PgnReader {
         if (whiteMove.length() > 0) {
             if (ranks.indexOf(whiteMove.charAt(0)) > 0) {
                 whiteMove = "p" + whiteMove;
+            } else {
+                whiteMove = whiteMove.toLowerCase();
             }
             results = checkBoard(board, whiteMove);
-            if (results[0] > 0) {
+            if (results[0] >= 0) {
                 System.out.println("Move Made");
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
@@ -107,7 +109,7 @@ public class PgnReader {
                 blackMove = "P" + blackMove;
             }
             results = checkBoard(board, blackMove);
-            if (results[0] > 0) {
+            if (results[0] >= 0) {
                 System.out.println("Move Made");
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
@@ -129,29 +131,37 @@ public class PgnReader {
         int[] results = {-1, -1, -1, -1};
         String files = "12345678";
         String ranks = "abcdefgh";
-        System.out.println("Move: " + move);
         if (move.length() > 1 && move.toLowerCase().charAt(0) == 'p') {
             if (move.length() >= 2 && move.charAt(2) == 'x') {
                 results = pawnCapture(board, move);
                 return results;
             }
-            move = move.substring(1);
+            //move = move.substring(1);
             move = move.trim();
         }
+        move = move.substring(1);
+        System.out.println("Move " + move);
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
                 if (board[i][j] == piece) {
                     possibleMoves = posMoves(board, piece, i, j);
-                    System.out.println("Possible Moves: " + possibleMoves);
+                    if (possibleMoves.length() > 0) {
+                        System.out.println("Possible Moves: " + possibleMoves);
+                    }
                     if (move.length() > 1) {
                         if (possibleMoves.indexOf(move) > 0) {
-                            System.out.println("MOVE POSSIBLE");
+                            System.out.println("MOVE MADE");
                             int newRank = ranks.indexOf(move.charAt(0));
                             int newFile = files.indexOf(move.charAt(1));
                             results[0] = i;
                             results[1] = j;
                             results[2] = newFile;
                             results[3] = newRank;
+                            System.out.print("[");
+                            for (int k = 0; k < results.length; k++) {
+                                System.out.print(results[k] + ", ");
+                            }
+                            System.out.println("]");
                             return results;
                         }
                     }
@@ -220,27 +230,53 @@ public class PgnReader {
                 i++;
             }
         } else if (piece == 'b' || piece == 'B') {
+            System.out.println("BISHOP FOUND");
             int i = 0;
-            while (i < board[r].length - 1 && board[i + 1][i + 1] == ' ') {
-                System.out.println("LOOP RUNNING");
-                posMoves += " " + ranks[i] + files[i];
+            boolean rowIB = (r + i) < board.length;
+            boolean colIB = (c + i) < board[i].length;
+            while (rowIB && colIB) {
+                posMoves += " " + ranks[c + i] + files[r + i];
                 i++;
+                rowIB = (r + i) < board.length;
+                colIB = (c + i) < board[i].length;
             }
+
             i = 0;
-            int j = 0;
-            char nextPos = ' ';
-            for (int k = 1; k < board[0].length; k++) {
-                j = k;
-                while (i < board.length - 1 && j > 0) {
-                    if (board[i + 1][j - 1] == ' ') {
-                        posMoves += " " + ranks[i] + files[j];
-                    }
-                    i++;
-                    j--;
-                }
+            rowIB = (r - i) > 0;
+            colIB = (c - i) > 0;
+            while (rowIB && colIB) {
+                posMoves += " " + ranks[c - i] + files[r - i];
+                i++;
+                rowIB = (r - i) >= 0;
+                colIB = (c - i) >= 0;
+            }
+
+            i = 0;
+            rowIB = (r - i) > 0;
+            colIB = (c + i) < board[r].length;
+            while (rowIB && colIB) {
+                posMoves += " " + ranks[c + i] + files[r - i];
+                i++;
+                rowIB = (r - i) < board.length;
+                colIB = (c + i) < board[i].length;
+            }
+
+            i = 0;
+            rowIB = (r + i) < board.length;
+            colIB = (c - i) > 0;
+            if (rowIB && colIB) {
+                System.out.println("CORRECT BISHOP FOUND");
+            }
+            while (rowIB && colIB) {
+                posMoves += " " + ranks[c - i] + files[r + i];
+                i++;
+                rowIB = (r + i) < board.length;
+                colIB = (c - i) > 0;
             }
         }
+        if (piece == 'n' || piece == 'N') {
 
+        }
         return posMoves;
     }
     /**
@@ -339,7 +375,7 @@ public class PgnReader {
      * @param board board containing current position of pieces
      */
     public static void boardToString(char[][] board) {
-        for (int i = 0; i < board.length; i++) {
+        for (int i = board.length - 1; i >= 0; i--) {
             for (int j = 0; j < board[i].length; j++) {
                 if (board[i][j] == ' ') {
                     System.out.print("* ");
