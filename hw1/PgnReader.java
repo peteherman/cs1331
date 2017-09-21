@@ -61,6 +61,7 @@ public class PgnReader {
         String moveStart = "1. ";
         String lineOfMoves = game.substring(game.indexOf(moveStart));
         lineOfMoves = lineOfMoves.substring(moveStart.length());
+        System.out.println(lineOfMoves);
         String[] moves = lineOfMoves.split("\\. ");
         for (String move : moves) {
             move = move.substring(0, move.length());
@@ -82,6 +83,7 @@ public class PgnReader {
         int[] results;
         String files = "12345678";
         String ranks = "abcdefg";
+        int castlingVal = -2;
         int nextMove = move.indexOf(" ");
         if (nextMove >= 0) {
             whiteMove = move.substring(0, nextMove);
@@ -101,7 +103,25 @@ public class PgnReader {
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
                 //return board;
+            } else if (results[0] == castlingVal) {
+                System.out.println("CASTLING MOVE");
+                int oCount = 0;
+                int kingRow = 0;
+                int kingRank = 4;
+                for (int i = 0; i < whiteMove.length(); i++) {
+                    if (whiteMove.charAt(i) == 'o') {
+                        oCount++;
+                    }
+                }
+                if (oCount < 3) {
+                    board[kingRow][kingRank] = board[kingRow][board.length - 1];
+                    board[kingRow][board.length - 1] = 'k';
+                } else {
+                    board[kingRow][kingRank] = board[kingRow][0];
+                    board[kingRow][0] = 'K';
+                }
             }
+
         }
         if (blackMove.length() > 0) {
             if (ranks.indexOf(blackMove.charAt(0)) > 0) {
@@ -112,7 +132,25 @@ public class PgnReader {
                 board[results[2]][results[3]] = board[results[0]][results[1]];
                 board[results[0]][results[1]] = ' ';
                 //return board;
+            } else if (results[0] == castlingVal) {
+                int oCount = 0;
+                int kingRow = board.length - 1;
+                int kingRank = 4;
+                for (int i = 0; i < blackMove.length(); i++) {
+                    if (blackMove.charAt(i) == 'o') {
+                        oCount++;
+                    }
+                }
+                if (oCount < 3) {
+                    board[kingRow][kingRank] = board[kingRow][board.length - 1];
+                    board[kingRow][board.length - 1] = 'K';
+                } else {
+                    board[kingRow][kingRank] = board[kingRow][0];
+                    board[kingRow][0] = 'K';
+                }
             }
+            System.out.println("WHITE MOVE: " + whiteMove);
+            System.out.println("BLACK MOVE: " + blackMove);
         }
         return board;
     }
@@ -130,12 +168,20 @@ public class PgnReader {
         String files = "12345678";
         String ranks = "abcdefgh";
         String endPos;
+        int castlingVal = -2;
         if (move.length() > 1 && move.toLowerCase().charAt(0) == 'p') {
             if (move.length() >= 2 && move.charAt(2) == 'x') {
                 results = pawnCapture(board, move);
                 return results;
             }
             move = move.trim();
+        }
+        if (move.length() > 1 && move.charAt(0) == 'o') {
+            System.out.println("CASTLING MOVE FOUND");
+            results[0] = castlingVal;
+            results[1] = castlingVal;
+            results[2] = castlingVal;
+            results[3] = castlingVal;
         }
         if (move.length() > 1 && move.charAt(1) == 'x') {
             move = move.substring(0, 1) + move.substring(2);
