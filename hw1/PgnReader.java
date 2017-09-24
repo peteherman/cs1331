@@ -117,6 +117,35 @@ public class PgnReader {
         return board;
     }
     /**
+     * Alter board to reflect an en passant move
+     *
+     * @param board current game baord to check and alter
+     * @param move the desired white or black move to be made
+     * @return an updated board
+     */
+    public static char[][] getEnPass(char[][] board, int endRow, int endCol,
+                                     String move) {
+        String ranks = "abcdefgh";
+        char startCol = move.charAt(move.indexOf('x') - 1);
+        System.out.println("EN PASS: " + move);
+        boolean isWhite = (endRow == 5) ? true : false;
+        boolean isLeftCap = (endCol < ranks.indexOf(startCol)) ? true : false;
+        if (isWhite) {
+            board[endRow][endCol] = 'P';
+            board[endRow - 1][endCol] = ' ';
+        } else {
+            board[endRow][endCol] = 'p';
+            board[endRow + 1][endCol] = ' ';
+        }
+        if (isLeftCap) {
+            System.out.printf("board[%d][%d]%n", (endRow - 1), (endCol + 1));
+            board[endRow - 1][endCol + 1] = ' ';
+        } else {
+            board[endRow - 1][endCol - 1] = ' ';
+        }
+        return board;
+    }
+    /**
      * Check to make sure move is viable and if so alter game board
      *
      * @param board current game board to check and alter
@@ -129,6 +158,7 @@ public class PgnReader {
         String files = "12345678";
         String ranks = "abcdefg";
         int castlingVal = -2;
+        int enPassVal = -4;
         int nextMove = move.indexOf(" ");
         if (nextMove >= 0) {
             whiteMove = move.substring(0, nextMove);
@@ -140,13 +170,10 @@ public class PgnReader {
         System.out.println(blackMove);
         if (whiteMove.length() > 0) {
             if (ranks.indexOf(whiteMove.charAt(0)) >= 0) {
-                whiteMove = "p" + whiteMove;
-            } else {
-                whiteMove = whiteMove.toLowerCase();
+                whiteMove = "P" + whiteMove;
             }
             if (whiteMove.indexOf('=') >= 0) {
                 System.out.println("PROMOTION: " + move);
-                // whiteRes = promotion(board, whiteMove);
                 return promotion(board, whiteMove);
             }
             int[] wRes = checkBoard(board, whiteMove);
@@ -159,31 +186,33 @@ public class PgnReader {
                 int kingRow = 0;
                 int kingRank = 4;
                 for (int i = 0; i < whiteMove.length(); i++) {
-                    if (whiteMove.charAt(i) == 'o') {
+                    if (whiteMove.charAt(i) == 'O') {
                         oCount++;
                     }
                 }
                 if (oCount < 3) {
-                    board[kingRow][kingRank] = 'r';
-                    board[kingRow][board.length - 1] = 'k';
+                    board[kingRow][kingRank] = 'R';
+                    board[kingRow][board.length - 1] = 'K';
                 } else {
-                    board[kingRow][kingRank] = 'r';
-                    board[kingRow][0] = 'k';
+                    board[kingRow][kingRank] = 'R';
+                    board[kingRow][0] = 'K';
                 }
+            } else if (wRes[1] == enPassVal) {
+                board = getEnPass(board, wRes[2], wRes[3],  move);
             }
 
         }
 
         if (blackMove.length() > 0) {
             if (ranks.indexOf(blackMove.charAt(0)) >= 0) {
-                blackMove = "P" + blackMove;
+                blackMove = "p" + blackMove;
+            } else {
+                blackMove = blackMove.toLowerCase();
             }
             int[] bRes = checkBoard(board, blackMove);
-            System.out.println();
             if (bRes[0] >= 0) {
                 board[bRes[2]][bRes[3]] = board[bRes[0]][bRes[1]];
                 board[bRes[0]][bRes[1]] = ' ';
-                //return board;
             } else if (bRes[1] == castlingVal) {
                 int oCount = 0;
                 int kingRow = board.length - 1;
@@ -195,10 +224,10 @@ public class PgnReader {
                 }
                 if (oCount < 3) {
                     board[kingRow][kingRank] = board[kingRow][board.length - 1];
-                    board[kingRow][board.length - 1] = 'K';
+                    board[kingRow][board.length - 1] = 'k';
                 } else {
-                    board[kingRow][kingRank] = 'R';
-                    board[kingRow][0] = 'K';
+                    board[kingRow][kingRank] = 'r';
+                    board[kingRow][0] = 'k';
                 }
             }
         }
@@ -285,13 +314,24 @@ public class PgnReader {
         String ranks = "abcdefgh";
         String files = "12345678";
         int len = move.length();
+        int enPassVal = -4;
+        String moveRes = "";
+        /*
         if (move.charAt(len - 1) == '+'
             || move.charAt(len - 1) == '#') {
             move = move.substring(0, len - 1);
         }
-        char startRank = move.charAt(1);
-        char endRank = move.charAt(move.indexOf('x') + 1);
-        char endFile = move.charAt(move.length() - 1);
+        */
+        for (int i = 0; i < move.length(); i++) {
+            if ((Character.isLetter(move.charAt(i)))
+                || (Character.isDigit(move.charAt(i)))) {
+                moveRes += move.charAt(i);
+            }
+        }
+        System.out.println(moveRes);
+        char startRank = moveRes.charAt(1);
+        char endRank = moveRes.charAt(moveRes.indexOf('x') + 1);
+        char endFile = moveRes.charAt(moveRes.length() - 1);
         int oldCol = ranks.indexOf(startRank);
         int newCol = ranks.indexOf(endRank);
         int newRow = files.indexOf(endFile);
@@ -300,6 +340,11 @@ public class PgnReader {
         results[1] = oldCol;
         results[2] = newRow;
         results[3] = newCol;
+        System.out.println(newRow + " " + newCol);
+        if (board[results[2]][results[3]] == ' ') {
+            results[0] = enPassVal;
+            results[1] = enPassVal;
+        }
         for (int res : results) {
             System.out.println(res);
         }
@@ -492,15 +537,15 @@ public class PgnReader {
         char[] ranks = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
         String posMoves = "";
         if (piece == 'p') {
-            if (r == wPawnRow) {
-                posMoves += " " + ranks[c] + files[r + 2];
-            }
-            posMoves += " " + ranks[c] + files[r + 1];
-        } else if (piece == 'P') {
             if (r == bPawnRow) {
-                posMoves += " " + ranks[c]  + files[r - 2];
+                posMoves += " " + ranks[c] + files[r - 2];
             }
             posMoves += " " + ranks[c] + files[r - 1];
+        } else if (piece == 'P') {
+            if (r == wPawnRow) {
+                posMoves += " " + ranks[c]  + files[r + 2];
+            }
+            posMoves += " " + ranks[c] + files[r + 1];
         } else if (piece == 'r' || piece == 'R') {
             posMoves = rookMoves(board, r, c);
         } else if (piece == 'b' || piece == 'B') {
@@ -523,14 +568,14 @@ public class PgnReader {
      */
     public static char[][] makeBoard() {
         char[][] board = {
-            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
             {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'}
         };
         return board;
     }
@@ -544,7 +589,7 @@ public class PgnReader {
     public static String fenFormat(char[][] board) {
         String result = "";
         int counter;
-        for (int i = 0; i < board.length; i++) {
+        for (int i = board.length - 1; i >= 0; i--) {
             counter = 0;
             for (int j = 0; j < board[i].length; j++) {
                 if (counter > 0 && board[i][j] != ' ') {
@@ -559,7 +604,7 @@ public class PgnReader {
             if (counter > 0) {
                 result += counter;
             }
-            if (i < board.length - 1) {
+            if (i > 0) {
                 result += '/';
             }
         }
