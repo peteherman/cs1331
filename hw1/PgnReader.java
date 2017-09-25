@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.Arrays;
 public class PgnReader {
 
     /**
@@ -61,11 +61,9 @@ public class PgnReader {
         String moveStart = "1. ";
         String lineOfMoves = game.substring(game.indexOf(moveStart));
         lineOfMoves = lineOfMoves.substring(moveStart.length());
-        System.out.println(lineOfMoves);
         String[] moves = lineOfMoves.split("\\. ");
         for (String move : moves) {
             move = move.substring(0, move.length());
-            System.out.println(move);
         }
 
         return moves;
@@ -86,7 +84,6 @@ public class PgnReader {
         String files = "12345678";
         char newType = ' ';
         char startRank = move.charAt(0);
-        System.out.println("start rank: "  + startRank);
         char endRank = ' ';
         char endFile = ' ';
         for (int i = 0; i < moveArr.length - 1; i++) {
@@ -101,7 +98,7 @@ public class PgnReader {
                 endRank = moveArr[i - 1];
                 endFile = '1';
             }
-            if (moveArr[i] == '=' && isWhite) {
+            if (moveArr[i] == '=' && !isWhite) {
                 newType = Character.toLowerCase(moveArr[i + 1]);
             } else if (moveArr[i] == '=') {
                 newType = moveArr[i + 1];
@@ -146,6 +143,95 @@ public class PgnReader {
         return board;
     }
     /**
+     * Check if move is one which requires disambiguation
+     *
+     * @param move the desired white or black move to be made
+     * @return a boolean if the piece requires disambiguation
+     */
+    public static boolean checkForDis(String move) {
+        String ranks = "abcdefgh";
+        if (Character.isDigit(move.charAt(1))) {
+            return true;
+        }
+        if (move.charAt(0) == 'B' || move.charAt(0) == 'b') {
+            move = move.substring(1);
+        }
+        int rankCount = 0;
+        for (int i = 0; i < move.length(); i++) {
+            if (ranks.indexOf(move.charAt(i)) >= 0) {
+                rankCount++;
+            }
+        }
+        return (rankCount > 1) ? true : false;
+    }
+    /** Make alteration to board in case where disambig is needed
+     *
+     * @param board the current game board to check and alter
+     * @param move the desired move to be made
+     * @return the updated board
+     */
+    public static char[][] disambig(char[][] board, String move) {
+        String files = "12345678";
+        String ranks = "abcdefg";
+        char piece = move.charAt(0);
+        int startFile;
+        int startRank;
+        int endRank;
+        int endFile;
+        String endPos;
+        if (Character.isDigit(move.charAt(1))) {
+            startFile = files.indexOf(move.charAt(1));
+            if (move.indexOf('x') < 0) {
+                endRank = ranks.indexOf(move.charAt(2));
+                endFile = files.indexOf(move.charAt(3));
+                endPos = ""  + move.charAt(2) + move.charAt(3);
+            } else {
+                endRank = ranks.indexOf(move.charAt(3));
+                endFile = files.indexOf(move.charAt(4));
+                endPos = ""  + move.charAt(3) + move.charAt(4);
+            }
+            for (int i = 0; i < board[startFile].length; i++) {
+                if (piece == board[startFile][i]) {
+                    String posMoves = posMoves(board, piece,
+                                               startFile, i);
+                    if (posMoves.indexOf(endPos) >= 0) {
+                        board[startFile][i] = ' ';
+                        board[endFile][endRank] = piece;
+                        return board;
+                    }
+                }
+            }
+        } else if (Character.isDigit(move.charAt(2))) {
+            startRank = ranks.indexOf(move.charAt(1));
+            startFile = files.indexOf(move.charAt(2));
+            endRank = ranks.indexOf(move.charAt(3));
+            endFile = files.indexOf(move.charAt(4));
+            board[startFile][startRank] = ' ';
+            board[endFile][endRank] = piece;
+        }
+        startRank = ranks.indexOf(move.charAt(1));
+        if (move.indexOf('x') < 0) {
+            endRank = ranks.indexOf(move.charAt(2));
+            endFile = files.indexOf(move.charAt(3));
+            endPos = "" + move.charAt(2) + move.charAt(3);
+        } else {
+            endRank = ranks.indexOf(move.charAt(3));
+            endFile = files.indexOf(move.charAt(4));
+            endPos = "" + move.charAt(3) + move.charAt(4);
+        }
+        for (int i = 0; i < board.length; i++) {
+            if (piece == board[i][startRank]) {
+                String posMoves = posMoves(board, piece, i, startRank);
+                if (posMoves.indexOf(endPos) >= 0) {
+                    board[i][startRank] = ' ';
+                    board[endFile][endRank] = piece;
+                    return board;
+                }
+            }
+        }
+        return board;
+    }
+    /**
      * Check to make sure move is viable and if so alter game board
      *
      * @param board current game board to check and alter
@@ -159,15 +245,21 @@ public class PgnReader {
         String ranks = "abcdefg";
         int castlingVal = -2;
         int enPassVal = -4;
+        int bLen = blackMove.length();
         int nextMove = move.indexOf(" ");
         if (nextMove >= 0) {
             whiteMove = move.substring(0, nextMove);
             blackMove = move.substring(nextMove + 1, move.length() - 1);
+            bLen = blackMove.length();
+            if (Character.isDigit(blackMove.charAt(bLen - 1))
+                && !Character.isLetter(blackMove.charAt(bLen - 2))) {
+                blackMove = blackMove.substring(0, bLen - 2);
+            }
         } else {
             whiteMove = move.substring(0, move.indexOf("\n"));
         }
-        System.out.println(whiteMove);
-        System.out.println(blackMove);
+        System.out.println("White move: " + whiteMove);
+        System.out.println("Black move: " + blackMove);
         if (whiteMove.length() > 0) {
             if (ranks.indexOf(whiteMove.charAt(0)) >= 0) {
                 whiteMove = "P" + whiteMove;
@@ -176,8 +268,20 @@ public class PgnReader {
                 System.out.println("PROMOTION: " + move);
                 return promotion(board, whiteMove);
             }
+            if (whiteMove.indexOf('x') < 0 && checkForDis(whiteMove)) {
+                return disambig(board, whiteMove);
+
+            }
+            if (checkForDis(whiteMove)) {
+                board = disambig(board, whiteMove);
+            } else if (checkForDis(whiteMove)) {
+                if (Character.isDigit(whiteMove.charAt(1))) {
+                    int startFile = files.indexOf(whiteMove.charAt(1));
+                }
+            }
             int[] wRes = checkBoard(board, whiteMove);
             if (wRes[0] >= 0) {
+                System.out.println(Arrays.toString(wRes));
                 board[wRes[2]][wRes[3]] = board[wRes[0]][wRes[1]];
                 board[wRes[0]][wRes[1]] = ' ';
             } else if (wRes[1] == castlingVal) {
@@ -191,11 +295,15 @@ public class PgnReader {
                     }
                 }
                 if (oCount < 3) {
-                    board[kingRow][kingRank] = 'R';
-                    board[kingRow][board.length - 1] = 'K';
+                    board[kingRow][kingRank + 1] = 'R';
+                    board[kingRow][kingRank + 2] = 'K';
+                    board[kingRow][kingRank] = ' ';
+                    board[kingRow][board[kingRow].length - 1] = ' ';
                 } else {
-                    board[kingRow][kingRank] = 'R';
-                    board[kingRow][0] = 'K';
+                    board[kingRow][kingRank - 1] = 'R';
+                    board[kingRow][kingRank] = ' ';
+                    board[kingRow][kingRank - 2] = 'K';
+                    board[kingRow][0] = ' ';
                 }
             } else if (wRes[1] == enPassVal) {
                 board = getEnPass(board, wRes[2], wRes[3],  move);
@@ -209,6 +317,9 @@ public class PgnReader {
             } else {
                 blackMove = blackMove.toLowerCase();
             }
+            if (checkForDis(blackMove)) {
+                board = disambig(board, blackMove);
+            }
             int[] bRes = checkBoard(board, blackMove);
             if (bRes[0] >= 0) {
                 board[bRes[2]][bRes[3]] = board[bRes[0]][bRes[1]];
@@ -218,20 +329,34 @@ public class PgnReader {
                 int kingRow = board.length - 1;
                 int kingRank = 4;
                 for (int i = 0; i < blackMove.length(); i++) {
-                    if (blackMove.charAt(i) == 'o') {
+                    if (blackMove.charAt(i) == 'O') {
                         oCount++;
                     }
                 }
                 if (oCount < 3) {
-                    board[kingRow][kingRank] = board[kingRow][board.length - 1];
-                    board[kingRow][board.length - 1] = 'k';
+                    board[kingRow][kingRank] = ' ';
+                    board[kingRow][kingRank + 2] = 'k';
+                    board[kingRow][kingRank + 1] = 'r';
+                    board[kingRow][board[kingRow].length - 1] = ' ';
                 } else {
-                    board[kingRow][kingRank] = 'r';
-                    board[kingRow][0] = 'k';
+                    board[kingRow][kingRank] = ' ';
+                    board[kingRow][kingRank - 2] = 'k';
+                    board[kingRow][kingRank - 1] = 'r';
+                    board[kingRow][0] = ' ';
                 }
             }
         }
+        // boardToString(board);
         return board;
+    }
+    /**
+     * Determine if piece is white
+     *
+     * @param piece the exact starting character of a given move
+     */
+    public static boolean isWhite(char piece) {
+        String whitePieces = "RNBKQP";
+        return (whitePieces.indexOf(piece) > 0) ? true : false;
     }
     /**
      * Search for pieces, determine if whether move is viable or not
@@ -243,39 +368,45 @@ public class PgnReader {
     public static int[] checkBoard(char[][] board, String move) {
         String possibleMoves = "";
         char piece = move.charAt(0);
+        boolean isWhite = isWhite(piece);
         int[] results = {-1, -1, -1, -1};
         String files = "12345678";
         String ranks = "abcdefgh";
         String endPos;
         int castlingVal = -2;
-        if (move.length() > 1 && move.charAt(0) == 'o') {
+
+        if (move.length() > 1 && move.charAt(0) == 'O') {
             System.out.println("CASTLING MOVE FOUND");
             results[0] = castlingVal;
             results[1] = castlingVal;
             results[2] = castlingVal;
             results[3] = castlingVal;
+            return results;
         }
         if (move.length() > 1 && move.toLowerCase().charAt(0) == 'p') {
             if (move.length() >= 2 && move.charAt(2) == 'x') {
-                System.out.println("PAWN CAPTURE: " + move);
                 results = pawnCapture(board, move);
                 return results;
             }
             move = move.trim();
         }
-        System.out.println("Move: " + move);
         if (move.length() > 1 && move.charAt(1) == 'x') {
             move = move.substring(0, 1) + move.substring(2);
-            System.out.println("Capture move: " + move);
         }
         if (move.length() > 1 && (move.charAt(move.length() - 1) == '#'
                                 || move.charAt(move.length() - 1) == '+')) {
             move = move.substring(0, move.length() - 1);
         }
-        if (results[0] == -2) {
-            System.out.println("RESULTS = -2");
-        }
+        System.out.println("MOVE: " + move);
         endPos = move.substring(1);
+        if (endPos.indexOf("\n") >= 0) {
+            endPos = endPos.substring(0, endPos.indexOf("\n"));
+        }
+        if (Character.isDigit(endPos.charAt(endPos.length() - 1))
+            && endPos.charAt(endPos.length() - 2) == ' ') {
+            endPos = endPos.substring(0, endPos.length() - 1);
+            endPos = endPos.trim();
+        }
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
                 if (board[i][j] == piece) {
@@ -288,11 +419,6 @@ public class PgnReader {
                             results[1] = j;
                             results[2] = newFile;
                             results[3] = newRank;
-                            System.out.print("Loop results: ");
-                            for (int result : results) {
-                                System.out.print(result + ", ");
-                            }
-                            System.out.println();
                             return results;
                         }
                     }
@@ -316,37 +442,27 @@ public class PgnReader {
         int len = move.length();
         int enPassVal = -4;
         String moveRes = "";
-        /*
-        if (move.charAt(len - 1) == '+'
-            || move.charAt(len - 1) == '#') {
-            move = move.substring(0, len - 1);
-        }
-        */
         for (int i = 0; i < move.length(); i++) {
             if ((Character.isLetter(move.charAt(i)))
                 || (Character.isDigit(move.charAt(i)))) {
                 moveRes += move.charAt(i);
             }
         }
-        System.out.println(moveRes);
+        char piece = moveRes.charAt(0);
+        boolean isWhite = isWhite(piece);
         char startRank = moveRes.charAt(1);
         char endRank = moveRes.charAt(moveRes.indexOf('x') + 1);
         char endFile = moveRes.charAt(moveRes.length() - 1);
         int oldCol = ranks.indexOf(startRank);
         int newCol = ranks.indexOf(endRank);
         int newRow = files.indexOf(endFile);
-        System.out.println(startRank + " " + endRank + " " + endFile);
-        results[0] = newRow - 1;
+        results[0] = (isWhite) ? newRow - 1 : newRow + 1;
         results[1] = oldCol;
         results[2] = newRow;
         results[3] = newCol;
-        System.out.println(newRow + " " + newCol);
         if (board[results[2]][results[3]] == ' ') {
             results[0] = enPassVal;
             results[1] = enPassVal;
-        }
-        for (int res : results) {
-            System.out.println(res);
         }
         return results;
     }
@@ -480,7 +596,6 @@ public class PgnReader {
     public static String queenMoves(char[][] board, int r, int c) {
         String posMoves;
         posMoves = rookMoves(board, r, c) + bishopMoves(board, r, c);
-        System.out.println(posMoves);
         return posMoves;
     }
     /**
