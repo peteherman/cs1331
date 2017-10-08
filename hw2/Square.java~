@@ -1,0 +1,35 @@
+public class Square {
+
+    private char file;
+    private char rank;
+    private String name;
+    public Square(char file, char rank) {
+        this("" + rank + file);
+    }
+
+    public Square(String name) {
+        this.name = name;
+        rank = name.charAt(0);
+        file = name.charAt(1);
+    }
+
+    public String toString() {
+        return name;
+    }
+
+    public boolean equals(Object obj) {
+        return (this.file == ((Square) obj).file
+                && this.rank == ((Square) obj).rank);
+    }
+
+    public int hashCode() {
+        return super.hashCode();
+    }
+    public static void main(String[] args) {
+        Square s1 = new Square('7', 'a');
+        System.out.println(s1);
+        Square s2 = new Square("a7");
+        System.out.println(s2);
+        System.out.println(s1.equals(s2));
+    }
+}

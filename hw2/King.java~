@@ -1,0 +1,20 @@
+public class King extends Piece {
+
+    public King(Color color) {
+        super(color);
+    }
+
+    public String algebraicName() {
+        return "K";
+    }
+
+    public String fenName() {
+        return (getColor().equals(Color.WHITE)) ? "K" : "k";
+    }
+
+    public Square[] movesFrom(Square square) {
+        Square[] squares = new Square[8];
+        return squares;
+    }
+
+}
