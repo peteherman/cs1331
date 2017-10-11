@@ -27,20 +27,4 @@ public class Queen extends Piece {
         }
         return posSquares;
     }
-
-    public static void main(String[] args) {
-        Piece queen = new Queen(Color.BLACK);
-        assert queen.algebraicName().equals("N");
-        assert queen.fenName().equals("n");
-        Square[] attackedSquares = queen.movesFrom(new Square("f6"));
-        // test that attackedSquares contains e8, g8, etc.
-        for (Square s : attackedSquares) {
-            System.out.println("" + s.getRank() + s.getFile());
-        }
-        Square a1 = new Square("a1");
-        Square otherA1 = new Square('a', '1');
-        Square h8 = new Square("h8");
-        assert a1.equals(otherA1);
-        assert !a1.equals(h8);
-    }
 }
