@@ -7,7 +7,7 @@
  * @author Peter Herman
  * @version 1.0
  */
-public class InvalidSquareException extends Exception {
+public class InvalidSquareException extends RuntimeException {
 
     /**
      * Constructor which makes super call to set message for

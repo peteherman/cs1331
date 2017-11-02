@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.Iterator;
@@ -19,12 +20,28 @@ public class SquareSet implements Set<Square> {
     }
 
     /**
+     * Creates a SquareSet containing all elements from giving collection
+     *
+     * @param Collection - collection of squares to be added to Set
+     * upon its creation
+     */
+    public SquareSet(Collection<Square> c) {
+        squares = new Square[10];
+        this.addAll(c);
+    }
+    /**
      * Adds the specific square to this set if it is not already present
      *
      * @param s - the square to be added
      * @return a boolean of whether or not the square was added
      */
     public boolean add(Square s) {
+        if (s == null) {
+            throw new NullPointerException();
+        }
+        if (!(s.isValid(s.getName()))) {
+            throw new InvalidSquareException(s.getName());
+        }
         if (this.contains(s)) {
             return false;
         } else {
@@ -76,8 +93,12 @@ public class SquareSet implements Set<Square> {
      * @return a boolean of whether or not all squares were added
      */
     public boolean addAll(Collection<? extends Square> c) {
-
-        return false;
+        for (Square square : c) {
+            if(!(this.add(square))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -105,18 +126,7 @@ public class SquareSet implements Set<Square> {
         }
         return false;
     }
-    /**
-     * Returns a Square at a specified index in the Set
-     *
-     * @param i - the specified index
-     * @return a square at the specified index
-     */
-    public Square get(int i) {
-        if (i < squares.length) {
-            return squares[i];
-        }
-        return null;
-    }
+
     /**
      * Returns true if this set contains all of the elements
      * of the specified collection.
@@ -125,9 +135,8 @@ public class SquareSet implements Set<Square> {
      * @return true if all elements in the given collection are in the set
      */
     public boolean containsAll(Collection<?> c) {
-        SquareSet set = (SquareSet)c;
-        for (int i = 0; i < set.size() && set.get(i) != null; i++) {
-            if (!(this.contains(set.get(i)))) {
+        for (Object square : c) {
+            if (!(this.contains(square))) {
                 return false;
             }
         }
@@ -217,10 +226,15 @@ public class SquareSet implements Set<Square> {
      * contained in the specified collection
      *
      * @param c - collection of elements to be removed from set
-     * @return true if ALL elements of collecetion are successfully removed
+     * @return true if ALL elements of collection are successfully removed
      */
     public boolean removeAll(Collection<?> c) {
-        return false;
+        for (Object square : c) {
+            if(!(remove(c))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -275,6 +289,12 @@ public class SquareSet implements Set<Square> {
      * @return an array of type Square that contains all Squares in the Set
      */
     public <Square> Square[] toArray(Square[] s) {
+        if (!(s.length >= size())) {
+           s = new Square[size()];
+        }
+        for (int i = 0; i < size(); i++) {
+            s[i] = (Square)squares[i];
+        }
         return  s;
     }
     /**
@@ -334,5 +354,22 @@ public class SquareSet implements Set<Square> {
             return null;
         }
     }
-
+    public static void main(String[] args) {
+        Square s = new Square('a', '2');
+        Square s2 = new Square("a2");
+        SquareSet set = new SquareSet();
+        Collection<Square> arrList = new ArrayList<>();
+        arrList.add(new Square("a3"));
+        arrList.add(new Square("a5"));
+        SquareSet set2 = new SquareSet(arrList);
+        set.add(s);
+        set.add(s2);
+        for (Square square : set) {
+            System.out.println(square.getName());
+        }
+        System.out.println("-----------------------------");
+        for (Square square : set2) {
+            System.out.println(square.getName());
+        }
+    }
 }

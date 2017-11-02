@@ -27,16 +27,27 @@ public class Square {
      * @param name - string containing square's rank and file
      */
     public Square(String name) throws InvalidSquareException {
-        if (name.length() != 2) {
-            throw new InvalidSquareException(name);
-        }
-        if (POS_FILES.indexOf(name.charAt(0)) < 0
-            || POS_RANKS.indexOf(name.charAt(1)) < 0) {
+        if (!(this.isValid(name))) {
             throw new InvalidSquareException(name);
         }
         this.name = name;
         file = name.charAt(0);
         rank = name.charAt(1);
+    }
+
+    public boolean isValid(String name) {
+        if (name.length() != 2) {
+            return false;
+        }
+        if (POS_FILES.indexOf(name.charAt(0)) < 0
+            || POS_RANKS.indexOf(name.charAt(1)) < 0) {
+            return false;
+        }
+        return true;
+    }
+
+    public String getName() {
+        return name;
     }
     /**
      * Get char representing square file
