@@ -1,7 +1,9 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 /**
  * Class designed to create a set containing all squares on chess board
  *
@@ -10,17 +12,19 @@ import java.util.Iterator;
  */
 public class SquareSet implements Set<Square> {
 
-
+    public static final String POS_RANKS = "12345678";
+    public static final String POS_FILES = "abcdefgh";
     private Square[] squares;
+
     /**
-     * Creates an empty Set of type Square
+     * Creates an empty SquareSet and initializes backing array
      */
     public SquareSet() {
         squares = new Square[10];
     }
 
     /**
-     * Creates a SquareSet containing all elements from giving collection
+     * Creates a SquareSet containing all elements from given collection
      *
      * @param Collection - collection of squares to be added to Set
      * upon its creation
@@ -29,23 +33,23 @@ public class SquareSet implements Set<Square> {
         squares = new Square[10];
         this.addAll(c);
     }
-    /**
-     * Adds the specific square to this set if it is not already present
-     *
-     * @param s - the square to be added
-     * @return a boolean of whether or not the square was added
-     */
+
+    @Override
     public boolean add(Square s) {
         if (s == null) {
             throw new NullPointerException();
         }
-        if (!(s.isValid(s.getName()))) {
+        if (s.getName().length() != 2) {
+            throw new InvalidSquareException(s.getName());
+        }
+        if (POS_FILES.indexOf(s.getName().charAt(0)) < 0
+            || POS_RANKS.indexOf(s.getName().charAt(1)) < 0) {
             throw new InvalidSquareException(s.getName());
         }
         if (this.contains(s)) {
             return false;
         } else {
-            if (needExpand()) {
+            if ((squares[squares.length - 1] != null)) {
                 expand();
             }
             for (int i = 0; i < squares.length; i++) {
@@ -59,96 +63,69 @@ public class SquareSet implements Set<Square> {
     }
 
     /**
-     * Checks to see if the backing structure needs to be expanded in size
-     * and expands the
-     * @return boolean - true if backing structure needs to be expanded
-     */
-    public boolean needExpand() {
-        for (Square s : squares) {
-            if (s == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * expands size of Set by creating an array that is 10 positions longer
+     * expands size of Set by creating an array that is 2 times longer
      * than previous array. Then copies entries from shorter array to newer
      * array
      */
     public void expand() {
-        Square[] longerArr = new Square[squares.length + 10];
+        Square[] longerArr = new Square[squares.length * 2];
         for (int i = 0; i < squares.length; i++) {
             longerArr[i] = squares[i];
         }
         squares = longerArr;
     }
 
-    /**
-     * Adds all of the elements in the specified collection to this
-     * set if they're not already present
-     *
-     * @param a Collection containing all squares to be added to the set
-     * @return a boolean of whether or not all squares were added
-     */
+    @Override
     public boolean addAll(Collection<? extends Square> c) {
+        boolean allAdded = true;
         for (Square square : c) {
-            if(!(this.add(square))) {
+            if (!(square.isValid(square.getName()))) {
                 return false;
             }
         }
-        return true;
+        for (Square square : c) {
+            if(!(this.add(square))) {
+                allAdded = false;
+            }
+        }
+        return allAdded;
     }
 
-    /**
-     * Removes all of the elements from this set
-     */
+    @Override
     public void clear() {
         for (int i = 0; i < squares.length; i++) {
             squares[i] = null;
         }
     }
 
-    /**
-     * Returns true if this set contains the specified element.
-     *
-     * @param o - Object to be checked for in the Set
-     * @return boolean of whether or not the given object was found
-     */
+    @Override
     public boolean contains(Object o) {
-        for (Square s : squares) {
-            if (s == null) {
-                return false;
-            } else if (s.equals(o)) {
+        if (o == null) {
+            throw new NullPointerException();
+        }
+        if (!(o instanceof Square)) {
+            throw new ClassCastException();
+        }
+        for (int i = 0; i < size(); i++) {
+            if (squares[i].equals(o)) {
                 return true;
             }
         }
         return false;
     }
 
-    /**
-     * Returns true if this set contains all of the elements
-     * of the specified collection.
-     *
-     * @param c collection containing elements to be checked for in the set
-     * @return true if all elements in the given collection are in the set
-     */
+    @Override
     public boolean containsAll(Collection<?> c) {
-        for (Object square : c) {
-            if (!(this.contains(square))) {
+        for (Object o : c) {
+            if (!(this.contains(o))) {
                 return false;
             }
         }
         return true;
     }
 
-    /**
-     * Compares the specified object with this set for equality.
-     *
-     * @param o - the object to check for equivalence for
-     * @return boolean of whether or not the elements are equal
-     */
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -156,98 +133,63 @@ public class SquareSet implements Set<Square> {
         if (null == o) {
             return false;
         }
-        if (!(o instanceof SquareSet)) {
+        if (!(o instanceof Set)) {
             return false;
         }
-        SquareSet set = (SquareSet)o;
-        if (squares.length != set.size()) {
+        Set set = (Set)o;
+        if (size() != set.size()) {
             return false;
         }
         return containsAll(set);
     }
 
-    /**
-     * Returns the hash code value for this set.
-     *
-     * @return int - the hash code value for this set
-     */
+    @Override
     public int hashCode() {
-        return -1;
+        int sumHash = 0;
+        for (Square square : squares) {
+            if (square != null) {
+                sumHash += square.hashCode();
+            }
+        }
+        return sumHash;
     }
 
-    /**
-     * Returns true if this set contains no elements
-     *
-     * @return boolean of whether or not set is empty
-     */
+    @Override
     public boolean isEmpty() {
         return (this.size() > 0) ? false : true;
     }
 
-    /**
-     * Returns an iterator over the elements in this set.
-     *
-     * @return Iterator<E> which is capable of iterating over elements
-     * in this set
-     */
+    @Override
     public Iterator<Square> iterator() {
         return new SquareSetIterator();
     }
 
-    /**
-     * Removes the specified element from this set if it
-     * is present (optional operation)
-     *
-     * @param o - the object to be removed
-     * @return true if the object is successfully removed from the set
-     */
+    @Override
     public boolean remove(Object o) {
-        int remInd = 0;
-        if (!(this.contains(o))) {
-            return false;
-        }
-        for (int i = 0; i < this.size(); i++) {
-            if (squares[i] == null) {
-                return true;
-            }
+        int pos = -1;
+        for (int i = 0; i < size(); i++) {
             if (squares[i].equals(o)) {
-                remInd = i;
+                pos = i;
                 squares[i] = null;
             }
         }
-        for (int i = remInd; i < squares.length - 1; i++) {
-            squares[i] = squares[i+1];
-        }
-        return true;
-    }
-
-    /**
-     * Removes from this set all of its elements that are
-     * contained in the specified collection
-     *
-     * @param c - collection of elements to be removed from set
-     * @return true if ALL elements of collection are successfully removed
-     */
-    public boolean removeAll(Collection<?> c) {
-        for (Object square : c) {
-            if(!(remove(c))) {
-                return false;
+        if (pos >= 0) {
+            for (int i = pos; i < squares.length - 1; i++) {
+                squares[i] = squares[i + 1];
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
-    /**
-     * Retains only the elements in this set that are contained
-     * in the specified collection.
-     * a.k.a removes from this set all of its elements that are
-     * not contained in the specified collection
-     *
-     * @param c - collection from which to populate set
-     * @return true if set is altered as a result of the call
-     */
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean retainAll(Collection<?> c) {
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -256,47 +198,49 @@ public class SquareSet implements Set<Square> {
      * @return int - the number of squares in the set
      */
     public int size() {
-        SquareSetIterator ss = (SquareSetIterator)iterator();
-        int count = 0;
-        while (ss.hasNext()) {
-            count++;
-            ss.next();
+        if (squares.length > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
         }
-        return count;
+        for (int i = 0; i < squares.length; i++) {
+            if (squares[i] == null) {
+                return i;
+            }
+        }
+        return squares.length;
     }
 
-    /**
-     * Returns an array containing all of the elements in this set.
-     *
-     * @return an array of type Object containing all Squares in the set
-     */
+    @Override
     public Object[] toArray() {
-        Object[] set = new Object[this.size()];
-        for (int i = 0; i < this.size(); i++) {
-            set[i] = (Object)squares[i];
+        Object[] res = new Square[size()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = squares[i];
         }
-        return (Object[])squares;
+        return res;
     }
 
-    /**
-     * Returns an array containing all of the elements in this set;
-     * the runtime type of the returned array is that of the specified array.
-     *
-     * @param s -  the array into which the elements of this set are to
-     * be stored, if it is big enough;
-     * otherwise, a new array of the same runtime type is allocated
-     * for this purpose.
-     * @return an array of type Square that contains all Squares in the Set
-     */
-    public <Square> Square[] toArray(Square[] s) {
-        if (!(s.length >= size())) {
-           s = new Square[size()];
+    @Override
+    public <Square> Square[] toArray(Square[] arr) {
+        if (arr == null) {
+            throw new NullPointerException();
         }
-        for (int i = 0; i < size(); i++) {
-            s[i] = (Square)squares[i];
+        /**
+           for (int i = 0; i < size(); i++) {
+            if (!(squares[i] instanceof arr.getClass())) {
+                throw new ArrayStoreException();
+            }
         }
-        return  s;
+        */
+        if (arr.length < size()) {
+            Square[] res = (Square[])Array.
+                newInstance(this.getClass(), size());
+        } else{
+            for (int i = 0; i < size(); i++) {
+                arr[i] = (Square)squares[i];
+            }
+        }
+        return arr;
     }
+
     /**
      * Organizes set into a printable format
      *
@@ -329,11 +273,8 @@ public class SquareSet implements Set<Square> {
         public SquareSetIterator() {
             ind = 0;
         }
-        /**
-         * Returns true if the iteration has more elements.
-         *
-         * @return true if there is another square in the set
-         */
+
+        @Override
         public boolean hasNext() {
             if (ind < squares.length
                 && squares[ind] != null) {
@@ -342,34 +283,21 @@ public class SquareSet implements Set<Square> {
             return false;
         }
 
-        /**
-         * Returns next element in the iteration
-         *
-         * @return next Square in set
-         */
+        @Override
         public Square next() {
             if (hasNext()) {
                 return squares[ind++];
             }
-            return null;
+            throw new NoSuchElementException();
         }
     }
     public static void main(String[] args) {
-        Square s = new Square('a', '2');
-        Square s2 = new Square("a2");
         SquareSet set = new SquareSet();
-        Collection<Square> arrList = new ArrayList<>();
-        arrList.add(new Square("a3"));
-        arrList.add(new Square("a5"));
-        SquareSet set2 = new SquareSet(arrList);
-        set.add(s);
-        set.add(s2);
-        for (Square square : set) {
-            System.out.println(square.getName());
-        }
-        System.out.println("-----------------------------");
-        for (Square square : set2) {
-            System.out.println(square.getName());
+        //FakeSquare fs = new FakeSquare("ab");
+        try {
+            set.add(new FakeSquare("a9"));
+        } catch (InvalidSquareException e)  {
+            System.out.println(e.getMessage());
         }
     }
 }
