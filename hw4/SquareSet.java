@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.Arrays;
 /**
  * Class designed to create a set containing all squares on chess board
  *
@@ -42,11 +43,11 @@ public class SquareSet implements Set<Square> {
         if (s.getName().length() != 2) {
             throw new InvalidSquareException(s.getName());
         }
-        if (POS_FILES.indexOf(s.getName().charAt(0)) < 0
-            || POS_RANKS.indexOf(s.getName().charAt(1)) < 0) {
+        if (POS_FILES.indexOf(s.getFile()) < 0
+            || POS_RANKS.indexOf(s.getRank()) < 0) {
             throw new InvalidSquareException(s.getName());
         }
-        if (this.contains(s)) {
+        if (contains(s)) {
             return false;
         } else {
             if ((squares[squares.length - 1] != null)) {
@@ -77,15 +78,10 @@ public class SquareSet implements Set<Square> {
 
     @Override
     public boolean addAll(Collection<? extends Square> c) {
-        boolean allAdded = true;
+        boolean allAdded = false;
         for (Square square : c) {
-            if (!(square.isValid(square.getName()))) {
-                return false;
-            }
-        }
-        for (Square square : c) {
-            if(!(this.add(square))) {
-                allAdded = false;
+            if(this.add(square)) {
+                allAdded = true;
             }
         }
         return allAdded;
@@ -231,11 +227,15 @@ public class SquareSet implements Set<Square> {
         }
         */
         if (arr.length < size()) {
-            Square[] res = (Square[])Array.
-                newInstance(this.getClass(), size());
+            // arr = (Square[])Array.
+            //  newInstance(this.getClass(), size());
+            return (Square[])toArray();
         } else{
-            for (int i = 0; i < size(); i++) {
+            for (int i = 0; i < squares.length; i++) {
                 arr[i] = (Square)squares[i];
+                if (arr[i] == null) {
+                    return arr;
+                }
             }
         }
         return arr;
@@ -248,9 +248,12 @@ public class SquareSet implements Set<Square> {
      */
     public String toString() {
         String result = "[";
-        SquareSetIterator ss = (SquareSetIterator)iterator();
-        while (ss.hasNext()) {
-            result += " " + ss.next().toString() + ",";
+        for (int i = 0; i < squares.length; i++) {
+            if (squares[i] != null) {
+                result += " " + squares[i].toString() + ",";
+            } else {
+                result += " null,";
+            }
         }
         result += "]";
         return result;
@@ -292,12 +295,15 @@ public class SquareSet implements Set<Square> {
         }
     }
     public static void main(String[] args) {
-        SquareSet set = new SquareSet();
-        //FakeSquare fs = new FakeSquare("ab");
-        try {
-            set.add(new FakeSquare("a9"));
-        } catch (InvalidSquareException e)  {
-            System.out.println(e.getMessage());
-        }
+        Object[] arr = new Object[2];
+        arr[0] = "dog";
+        arr[1] = "cat";
+        SquareSet ss = new SquareSet();
+        ss.add(new Square('a', '2'));
+        ss.add(new Square('a', '3'));
+        ss.add(new Square('a', '4'));
+        System.out.println(ss);
+        arr = ss.toArray(arr);
+        System.out.println(Arrays.toString(arr));
     }
 }
