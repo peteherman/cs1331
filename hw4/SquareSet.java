@@ -1,10 +1,8 @@
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.Arrays;
 /**
  * Class designed to create a set containing all squares on chess board
  *
@@ -27,7 +25,7 @@ public class SquareSet implements Set<Square> {
     /**
      * Creates a SquareSet containing all elements from given collection
      *
-     * @param Collection - collection of squares to be added to Set
+     * @param c  - collection of squares to be added to Set
      * upon its creation
      */
     public SquareSet(Collection<Square> c) {
@@ -45,6 +43,10 @@ public class SquareSet implements Set<Square> {
         }
         if (POS_FILES.indexOf(s.getFile()) < 0
             || POS_RANKS.indexOf(s.getRank()) < 0) {
+            throw new InvalidSquareException(s.getName());
+        }
+        if (POS_FILES.indexOf(s.getName().charAt(0)) < 0
+            || POS_RANKS.indexOf(s.getName().charAt(1)) < 0) {
             throw new InvalidSquareException(s.getName());
         }
         if (contains(s)) {
@@ -78,9 +80,12 @@ public class SquareSet implements Set<Square> {
 
     @Override
     public boolean addAll(Collection<? extends Square> c) {
+        if (c == null) {
+            throw new NullPointerException();
+        }
         boolean allAdded = false;
         for (Square square : c) {
-            if(this.add(square)) {
+            if (add(square)) {
                 allAdded = true;
             }
         }
@@ -132,7 +137,7 @@ public class SquareSet implements Set<Square> {
         if (!(o instanceof Set)) {
             return false;
         }
-        Set set = (Set)o;
+        Set set = (Set) o;
         if (size() != set.size()) {
             return false;
         }
@@ -216,29 +221,33 @@ public class SquareSet implements Set<Square> {
 
     @Override
     public <Square> Square[] toArray(Square[] arr) {
-        if (arr == null) {
-            throw new NullPointerException();
-        }
-        /**
-           for (int i = 0; i < size(); i++) {
-            if (!(squares[i] instanceof arr.getClass())) {
-                throw new ArrayStoreException();
-            }
-        }
-        */
-        if (arr.length < size()) {
-            // arr = (Square[])Array.
-            //  newInstance(this.getClass(), size());
-            return (Square[])toArray();
-        } else{
-            for (int i = 0; i < squares.length; i++) {
-                arr[i] = (Square)squares[i];
-                if (arr[i] == null) {
-                    return arr;
+        int size = size();
+        Square[] r = arr.length >= size ? arr : (Square[]) Array
+            .newInstance(arr.getClass().getComponentType(), size);
+        Iterator it = this.iterator();
+
+        int i;
+        for (i = 0; i < r.length; i++) {
+            if (!it.hasNext()) {
+                if (arr != r) {
+                    Square[] res = (Square[]) Array
+                        .newInstance(r.getClass().getComponentType(), i);
+                    for (int j = 0; j < i; j++) {
+                        res[i] = r[i];
+                    }
+                    return res;
                 }
+                r[i] = null;
+                return r;
+            }
+            r[i] =  (Square) it.next();
+        }
+        if (it.hasNext()) {
+            for ( ; i < r.length; i++) {
+                r[i] = null;
             }
         }
-        return arr;
+        return r;
     }
 
     /**
@@ -293,17 +302,5 @@ public class SquareSet implements Set<Square> {
             }
             throw new NoSuchElementException();
         }
-    }
-    public static void main(String[] args) {
-        Object[] arr = new Object[2];
-        arr[0] = "dog";
-        arr[1] = "cat";
-        SquareSet ss = new SquareSet();
-        ss.add(new Square('a', '2'));
-        ss.add(new Square('a', '3'));
-        ss.add(new Square('a', '4'));
-        System.out.println(ss);
-        arr = ss.toArray(arr);
-        System.out.println(Arrays.toString(arr));
     }
 }

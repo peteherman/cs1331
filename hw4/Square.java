@@ -34,18 +34,28 @@ public class Square {
         file = name.charAt(0);
         rank = name.charAt(1);
     }
-
-    public boolean isValid(String name) {
-        if (name.length() != 2) {
+    /**
+     * method determines if a given value for a square is valid
+     *
+     * @param value - value for a square consisting of rank and file
+     * @return boolean - true if value is valid
+     */
+    public boolean isValid(String value) {
+        if (value.length() != 2) {
             return false;
         }
-        if (POS_FILES.indexOf(name.charAt(0)) < 0
-            || POS_RANKS.indexOf(name.charAt(1)) < 0) {
+        if (POS_FILES.indexOf(value.charAt(0)) < 0
+            || POS_RANKS.indexOf(value.charAt(1)) < 0) {
             return false;
         }
         return true;
     }
 
+    /**
+     * Returns a square's name (file and rank)
+     *
+     * @return String - a square's file and rank
+     */
     public String getName() {
         return name;
     }
@@ -99,7 +109,6 @@ public class Square {
      * @return value from super class hashCode method
      */
     public int hashCode() {
-        return super.hashCode();
+        return getFile() - 'a' + Integer.parseInt("" + getRank());
     }
-
 }
