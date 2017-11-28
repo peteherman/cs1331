@@ -55,4 +55,8 @@ public class ChessGame {
     public String getResult() {
         return result.get();
     }
+
+    public List<String> getMoves() {
+        return moves;
+    }
 }

@@ -1,17 +1,21 @@
+import javafx.scene.control.ButtonType;
 import javafx.application.Application;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Button;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.scene.layout.GridPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.Label;
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.beans.binding.Bindings;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextField;
 /**
  * Creates a user interface for navigating a chess database
  *
@@ -25,12 +29,60 @@ public class ChessGui extends Application {
     public void start(Stage stage) {
         Button viewBtn = new Button("View Game");
         Button dismissBtn = new Button("Dismiss");
-        GridPane gridpane = new GridPane();
-        VBox vbox = new VBox();
-        HBox hbox = new HBox();
+        Button searchBtn = new Button("Search");
         ChessDb chessDb = new ChessDb();
+        TextField searchField = new TextField("Search");
 
-        TableView<ChessGame> tableView = new TableView<>();
+
+        TableView<ChessGame> tableView = createTableView(pullData(chessDb));
+
+        viewBtn.disableProperty()
+            .bind(Bindings.isNull(tableView
+                                  .getSelectionModel().selectedItemProperty()));
+        viewBtn.setOnAction(e -> {
+                ChessGame game = tableView
+                    .getSelectionModel().getSelectedItem();
+                viewGame(game);
+                    });
+        dismissBtn.setOnAction(e -> Platform.exit());
+
+        HBox hbox = new HBox();
+        hbox.getChildren().addAll(viewBtn, dismissBtn);
+        HBox searchHBox = new HBox();
+        searchHBox.getChildren().addAll(searchField, searchBtn);
+        VBox vbox = new VBox();
+        vbox.getChildren().addAll(tableView, hbox, searchHBox);
+
+        Scene scene = new Scene(vbox);
+
+        stage.setScene(scene);
+        stage.setWidth(1000);
+        stage.setTitle("Chess Gui");
+        stage.show();
+    }
+    /**
+     * creates observable list of chess games from given chess database
+     *
+     * @param db a chess database containing multiple chess games
+     * @return an observable list of chess games to be used to populate
+     * a tableview
+     */
+    public ObservableList<ChessGame> pullData(ChessDb db) {
+        return FXCollections.observableArrayList(db.getGames());
+    }
+
+    /**
+     * Creates a new tableview appends needed columns to tableview
+     * and connects each property of chess game to its respective column
+     *
+     * @param games - observable list of chess games used to populate rows
+     * of the tableview
+     * @return a tableview containing chessgames from given observable list
+     */
+    private TableView<ChessGame>
+        createTableView(ObservableList<ChessGame> games) {
+        TableView<ChessGame> res =  new TableView<>(games);
+
         TableColumn eventCol = new TableColumn("Event");
         eventCol
             .setCellValueFactory(
@@ -61,27 +113,31 @@ public class ChessGui extends Application {
             .setCellValueFactory(
                                  new PropertyValueFactory<
                                  ChessGame, StringProperty>("Result"));
-        tableView.getColumns().addAll(eventCol, siteCol, dateCol,
-                                      whiteCol, blackCol, resultCol);
-
-        tableView.setItems(pullData(new ChessDb()));
-
-        //gridpane.add(tableView, 0, 0, 10, 1);
-        gridpane.setConstraints(viewBtn, 0, 1); // col 0, row 1
-        gridpane.setConstraints(dismissBtn, 1, 1);
-        gridpane.getChildren().addAll(viewBtn, dismissBtn);
-        hbox.getChildren().addAll(viewBtn, dismissBtn);
-        vbox.getChildren().addAll(tableView, hbox);
-
-        Scene scene = new Scene(vbox);
-
-        stage.setScene(scene);
-        stage.setWidth(1000);
-        stage.setTitle("Chess Gui");
-        stage.show();
+        res.getColumns().addAll(eventCol, siteCol, dateCol,
+                                whiteCol, blackCol, resultCol);
+        return res;
     }
 
-    public ObservableList<ChessGame> pullData(ChessDb db) {
-        return FXCollections.observableArrayList(db.getGames());
+    /**
+     *
+     *
+     */
+    private void viewGame(ChessGame game) {
+        Alert alert = new Alert(Alert.AlertType.NONE);
+        alert.setTitle(game.getEvent());
+        alert.setHeaderText(String.format("Event: %s%nSite: %s%n"
+                                          + "Date: %s%nWhite: %s%n"
+                                          + "Black: %s%nResult: %s%n",
+                                          game.getEvent(), game.getSite(),
+                                          game.getDate(), game.getWhite(),
+                                          game.getBlack(), game.getResult()));
+
+
+        ListView<String> moves = new
+            ListView(FXCollections.observableArrayList(game.getMoves()));
+        alert.getDialogPane().setContent(moves);
+        alert.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        alert.setContentText("");
+        alert.showAndWait();
     }
 }
