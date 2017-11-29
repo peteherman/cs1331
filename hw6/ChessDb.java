@@ -1,20 +1,38 @@
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Class represents a database containing moves in a chess game
+ *
+ * @author Chris Simpkins
+ * @version 1.0
+ */
 public class ChessDb {
 
     private List<ChessGame> games;
 
+    /**
+     * Creates a new database of chess games
+     */
     public ChessDb() {
         games = new ArrayList<>();
         games.add(morphyIsouard());
         games.add(talFischer());
     }
 
+    /**
+     * Returns a list of games in database
+     *
+     * @return a List containing ChessGames in the database
+     */
     public List<ChessGame> getGames() {
         return games;
     }
 
+    /**
+     * Creates morphyIsouard chess game
+     *
+     * @return a chessgame of morphyIsouard
+     */
     private ChessGame morphyIsouard() {
         ChessGame game = new ChessGame(
             "A Night at the Opera",
@@ -44,6 +62,11 @@ public class ChessDb {
         return game;
     }
 
+    /**
+     * Creates a talFischer ChessGame
+     *
+     * @return ChessGame of talFischer
+     */
     private ChessGame talFischer() {
         ChessGame game = new ChessGame(
             "Bled-Zagreb-Belgrade Candidates",
